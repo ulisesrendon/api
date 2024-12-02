@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: Ecommerce 2.0 - Authentication
+  description: |-
+    E-commerce user authentication system
+  version: 1.0.0
+  license:
+    name: CC BY-SA 4.0
+    url: https://creativecommons.org/licenses/by-sa/4.0/
+tags:
+  - name: User-Access
+    description: User register/access
+  - name: Password-Update
+    description: User update password or request for password reset
+  - name: Session-Operations
+    description: Operations for session data request or session destroy, refresh
+paths:
+  /v2/auth/register:
+    post:
+      tags:
+        - User-Access
+      summary: New user register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: customer@mail.test
+                  format: email
+                password:
+                  type: string
+                app:
+                  type: string
+                  example: medicoenlinea
+                  description: String that identifies the website where user is trying to register
+                name:
+                  type: string
+                  example: Luis González
+                phone:
+                  type: integer
+                  example: 5512345678
+                data:
+                  type: object
+                  description: Customer extra data
+      responses:
+        200:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User registered successfully
+                properties:
+                  id:
+                    type: integer
+                    example: 12345
+                    description: Customer Id
+                  pid:
+                    type: integer
+                    example: 12999
+                    description: Profile Id
+                  uuid:
+                    type: string
+                    format: uuid
+                    description: Profile UUID
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  session:
+                    type: string
+                    example: 14e2a7c4ce3a9559469376dc61a31dbab96ee388289685ed4d4c873c64e22cf5150b8c79359015d76956f45dc2a1853ad748cd49738c48161b0b1c8824143db6
+                    description: Active Session Token
+        400:
+          description: Invalid data
+  /v2/auth/access:
+    post:
+      tags:
+        - User-Access
+      summary: User access
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: customer@mail.test
+                  format: email
+                password:
+                  type: string
+      responses:
+        200:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                description: User registered successfully
+                properties:
+                  id:
+                    type: integer
+                    example: 12345
+                    description: Customer Id
+                  pid:
+                    type: integer
+                    example: 12999
+                    description: Profile Id
+                  uuid:
+                    type: string
+                    format: uuid
+                    description: Profile UUID
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  session:
+                    type: string
+                    example: 14e2a7c4ce3a9559469376dc61a31dbab96ee388289685ed4d4c873c64e22cf5150b8c79359015d76956f45dc2a1853ad748cd49738c48161b0b1c8824143db6
+                    description: Active Session Token
+                  suscription:
+                    type: boolean
+                  cart_uuid:
+                    type: string
+                    format: uuid
+                  roles:
+                    type: array
+                    items:
+                      type: string 
+        400:
+          description: Invalid data
+  /v2/auth/access/confirm/{TOKEN}:
+    get:
+      tags:
+        - User-Access
+      summary: User validate account email
+      parameters:
+      - name: TOKEN
+        in: path
+        description: Email received token
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        400:
+          description: Invalid data
+  /v2/auth/session/{SESSION_ID}/password:
+    patch:
+      tags:
+        - Password-Update
+      summary: User password update
+      parameters:
+      - name: SESSION_ID
+        in: path
+        description: Session Id Token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                oldpassword:
+                  type: string
+                app:
+                  type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        400:
+          description: Invalid data
+  /v2/auth/access/email/{EMAIL}/reset?app={APPNAME}:
+    get:
+      tags:
+        - Password-Update
+      summary: User start process for password reset
+      parameters:
+      - name: EMAIL
+        in: path
+        description: Email for the account to reset password
+        required: true
+        schema:
+          type: string
+      - name: APPNAME
+        in: query
+        description: Name of the app website from password reset is requested
+        required: true
+        schema:
+          type: string
+          example: medicoenlinea
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        400:
+          description: Invalid data
+  /v2/auth/access/reset/{TOKEN}?app={APPNAME}:
+    post:
+      tags:
+        - Password-Update
+      summary: Password update with email received token
+      parameters:
+      - name: TOKEN
+        in: path
+        description: Email received token
+        required: true
+        schema:
+          type: string
+      - name: APPNAME
+        in: query
+        description: Name of the app website from password reset is requested
+        required: true
+        schema:
+          type: string
+          example: medicoenlinea
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        400:
+          description: Invalid data
+  /v2/auth/session/{SESSION_ID}:
+    get:
+      tags:
+        - Session-Operations
+      summary: View session status
+      parameters:
+      - name: SESSION_ID
+        in: path
+        description: Session Id Token
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Active"
+        400:
+          description: Invalid data
+  /v2/auth/session/{SESSION_ID}/close:
+    get:
+      tags:
+        - Session-Operations
+      summary: Session destroy
+      parameters:
+      - name: SESSION_ID
+        in: path
+        description: Session Id Token
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        400:
+          description: Invalid data
+  /v2/auth/session/{SESSION_ID}/refresh:
+    get:
+      tags:
+        - Session-Operations
+      summary: Refresh session Id Token
+      parameters:
+      - name: SESSION_ID
+        in: path
+        description: Session Id Token
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    type: string
+                    description: New session Id token
+                    example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+        400:
+          description: Invalid data
+  /v2/auth/session/{SESSION_ID}/data:
+    get:
+      tags:
+        - Session-Operations
+      summary: Get user data from active session Id
+      parameters:
+      - name: SESSION_ID
+        in: path
+        description: Session Id Token
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1234
+                  pid:
+                    type: integer
+                    example: 12999
+                  uuid:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                    format: email
+                  name:
+                    type: string
+                    example: Luis González
+                  activeSession:
+                    type: boolean
+                  activeApikey:
+                    type: boolean
+                  roles:
+                    type: array
+                    items: 
+                      type: string
+        400:
+          description: Invalid data
+components:
+  schemas:
+    OkResponse:
+      type: object
+      description: Success response
+      properties:
+        status:
+          type: string
+          example: success
