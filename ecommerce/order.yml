@@ -44,7 +44,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProductData'
+                      $ref: '#/components/schemas/CartProductData'
         400:
           description: Invalid data
     patch:
@@ -125,7 +125,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProductData'
+                      $ref: '#/components/schemas/CartProductData'
         400:
           description: Invalid data
   /v2/order:
@@ -151,60 +151,71 @@ paths:
                   example: 0
       responses:
         200:
+          description: Order created info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order:
+                    type: object
+                    $ref: "#/components/schemas/OrderBasicInfoModel"
+        400:
+          description: Invalid data
+  /v2/order/{ORDER_ID}:
+    get:
+      tags:
+        - Order
+      summary: Get Order
+      responses:
+        200:
           description: Cart info
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  cart:
-                    type: object
+                  order:
+                    allOf: 
+                      - type: object
+                      - $ref: "#/components/schemas/OrderBasicInfoModel"
                     properties:
-                      order:
+                      is_paid:
+                        type: boolean
+                      date_shipment:
+                        type: string
+                        format: date-time
+                      date_delivered:
+                        type: string
+                        format: date-time
+                      date_cancel:
+                        type: string
+                        format: date-time
+                      email:
+                        type: string
+                        format: email
+                      name:
+                        type: string
+                      total_iva:
+                        type: number
+                        format: float
+                      total_ieps:
+                        type: number
+                        format: float
+                      total_discount:
+                        type: number
+                        format: float
+                      subtotal_product_ivataxed:
+                        type: number
+                        format: float
+                      subtotal_product_iepstaxed:
+                        type: number
+                        format: float
+                      subtotal_product_notaxed:
+                        type: number
+                        format: float
+                      address:
                         type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 10000
-                            description: Order Id
-                          client_id:
-                            type: integer
-                            example: 1
-                            description: Order Id
-                          payment_method:
-                            type: string
-                            example: bank_transfer
-                          cost_shipping:
-                            type: number
-                            format: float
-                            example: 0
-                          delivery_place_id:
-                            type: integer
-                          total_qty:
-                            type: integer
-                            example: 1
-                          status_id:
-                            type: integer
-                            example: 1
-                          total_amount_net:
-                            type: number
-                            format: float
-                            example: 221.99
-                          total_amount_gross:
-                            type: number
-                            format: float
-                            example: 202.24
-                          total_ammount_tax:
-                            type: number
-                            format: float
-                            example: 18.75
-                          total_amount_discounted_notax:
-                            type: number
-                            format: float
-                            example: 202.24
-                          created_date:
-                            type: string
-                            format: date-time
         400:
           description: Invalid data
 components:
@@ -235,7 +246,7 @@ components:
         zip_code:
           type: string
           example: "03200"
-    ProductData:
+    CartProductData:
       type: object
       description: Product Data Model
       properties:
@@ -448,3 +459,49 @@ components:
         totalItems:
           type: integer
           example: 2
+    OrderBasicInfoModel:
+      type: object
+      description: Esencial order info
+      properties:
+        id:
+          type: integer
+          example: 10000
+          description: Order Id
+        client_id:
+          type: integer
+          example: 1
+          description: Order Id
+        payment_method:
+          type: string
+          example: bank_transfer
+        cost_shipping:
+          type: number
+          format: float
+          example: 0
+        delivery_place_id:
+          type: integer
+        total_qty:
+          type: integer
+          example: 1
+        status_id:
+          type: integer
+          example: 1
+        total_amount_net:
+          type: number
+          format: float
+          example: 221.99
+        total_amount_gross:
+          type: number
+          format: float
+          example: 202.24
+        total_ammount_tax:
+          type: number
+          format: float
+          example: 18.75
+        total_amount_discounted_notax:
+          type: number
+          format: float
+          example: 202.24
+        created_date:
+          type: string
+          format: date-time
