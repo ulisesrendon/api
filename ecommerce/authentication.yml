@@ -3,10 +3,10 @@ info:
   title: Ecommerce 2.0 - Authentication
   description: |-
     E-commerce user authentication system
+
+    - [Authentication API](authentication.html)
+    - [Customer Order API](order.html)
   version: 1.0.0
-  license:
-    name: CC BY-SA 4.0
-    url: https://creativecommons.org/licenses/by-sa/4.0/
 tags:
   - name: User-Access
     description: User register/access

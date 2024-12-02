@@ -1,363 +1,210 @@
 openapi: 3.0.3
 info:
-  title: Ecommerce 2.0 - Authentication
+  title: Ecommerce 2.0 - Customer Order
   description: |-
-    E-commerce user authentication system
-  version: 1.0.0
-  license:
-    name: CC BY-SA 4.0
-    url: https://creativecommons.org/licenses/by-sa/4.0/
+    E-commerce order system
+
+    - [Authentication API](authentication.html)
+    - [Customer Order API](order.html)
+  version: 2.0.0
 tags:
-  - name: User-Access
-    description: User register/access
-  - name: Password-Update
-    description: User update password or request for password reset
-  - name: Session-Operations
-    description: Operations for session data request or session destroy, refresh
+  - name: Cart
+    description: Cart Operations
+  - name: Order
+    description: Order Operations
 paths:
-  /v2/auth/register:
-    post:
+  /v2/cart/{UUID}:
+    get:
       tags:
-        - User-Access
-      summary: New user register
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: customer@mail.test
-                  format: email
-                password:
-                  type: string
-                app:
-                  type: string
-                  example: medicoenlinea
-                  description: String that identifies the website where user is trying to register
-                name:
-                  type: string
-                  example: Luis González
-                phone:
-                  type: integer
-                  example: 5512345678
-                data:
-                  type: object
-                  description: Customer extra data
+        - Cart
+      summary: List items and cart info
+      parameters:
+      - name: UUID
+        in: path
+        description: Cart UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         200:
-          description: Created
+          description: Cart info
           content:
             application/json:
               schema:
                 type: object
-                description: User registered successfully
                 properties:
-                  id:
-                    type: integer
-                    example: 12345
-                    description: Customer Id
-                  pid:
-                    type: integer
-                    example: 12999
-                    description: Profile Id
-                  uuid:
-                    type: string
-                    format: uuid
-                    description: Profile UUID
-                  name:
-                    type: string
-                  email:
-                    type: string
-                  session:
-                    type: string
-                    example: 14e2a7c4ce3a9559469376dc61a31dbab96ee388289685ed4d4c873c64e22cf5150b8c79359015d76956f45dc2a1853ad748cd49738c48161b0b1c8824143db6
-                    description: Active Session Token
-        400:
-          description: Invalid data
-  /v2/auth/access:
-    post:
-      tags:
-        - User-Access
-      summary: User access
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: customer@mail.test
-                  format: email
-                password:
-                  type: string
-      responses:
-        200:
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                description: User registered successfully
-                properties:
-                  id:
-                    type: integer
-                    example: 12345
-                    description: Customer Id
-                  pid:
-                    type: integer
-                    example: 12999
-                    description: Profile Id
-                  uuid:
-                    type: string
-                    format: uuid
-                    description: Profile UUID
-                  name:
-                    type: string
-                  email:
-                    type: string
-                  session:
-                    type: string
-                    example: 14e2a7c4ce3a9559469376dc61a31dbab96ee388289685ed4d4c873c64e22cf5150b8c79359015d76956f45dc2a1853ad748cd49738c48161b0b1c8824143db6
-                    description: Active Session Token
-                  suscription:
-                    type: boolean
-                  cart_uuid:
-                    type: string
-                    format: uuid
-                  roles:
+                  cart:
+                    type: object
+                    $ref: '#/components/schemas/CartInfoModel'
+                  client:
+                    type: object
+                    nullable: true
+                    $ref: '#/components/schemas/CartCustomerModel'
+                  items:
                     type: array
                     items:
-                      type: string 
+                      $ref: '#/components/schemas/ProductData'
         400:
           description: Invalid data
-  /v2/auth/access/confirm/{TOKEN}:
-    get:
-      tags:
-        - User-Access
-      summary: User validate account email
-      parameters:
-      - name: TOKEN
-        in: path
-        description: Email received token
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OkResponse'
-        400:
-          description: Invalid data
-  /v2/auth/session/{SESSION_ID}/password:
     patch:
       tags:
-        - Password-Update
-      summary: User password update
+        - Cart
+      summary: Add items to cart
       parameters:
-      - name: SESSION_ID
+      - name: UUID
         in: path
-        description: Session Id Token
+        description: Cart UUID
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                password:
-                  type: string
-                oldpassword:
-                  type: string
-                app:
-                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId:
+                        type: integer
+                        example: 7916
+                        description: Product Id to add to cart
+                      quantity:
+                        type: integer
+                        example: 2
+                        description: quantity to add to the cart for this product
+                client_id:
+                  type: integer
+                  description: Customer Id
       responses:
         200:
-          description: Success
+          description: Cart info
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponse'
+                type: object
+                properties:
+                  cart:
+                    type: object
+                    $ref: '#/components/schemas/CartInfoModel'
         400:
           description: Invalid data
-  /v2/auth/access/email/{EMAIL}/reset?app={APPNAME}:
+  /v2/cart/client:
     get:
       tags:
-        - Password-Update
-      summary: User start process for password reset
+        - Cart
+      summary: List items and cart info from customer session
       parameters:
-      - name: EMAIL
-        in: path
-        description: Email for the account to reset password
+      - name: "x-session"
+        in: header
+        description: Active customer session Id Token
         required: true
         schema:
           type: string
-      - name: APPNAME
-        in: query
-        description: Name of the app website from password reset is requested
-        required: true
-        schema:
-          type: string
-          example: medicoenlinea
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
       responses:
         200:
-          description: Success
+          description: Cart info
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponse'
+                type: object
+                properties:
+                  cart:
+                    type: object
+                    $ref: '#/components/schemas/CartInfoModel'
+                  client:
+                    type: object
+                    nullable: true
+                    $ref: '#/components/schemas/CartCustomerModel'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductData'
         400:
           description: Invalid data
-  /v2/auth/access/reset/{TOKEN}?app={APPNAME}:
+  /v2/order:
     post:
       tags:
-        - Password-Update
-      summary: Password update with email received token
-      parameters:
-      - name: TOKEN
-        in: path
-        description: Email received token
-        required: true
-        schema:
-          type: string
-      - name: APPNAME
-        in: query
-        description: Name of the app website from password reset is requested
-        required: true
-        schema:
-          type: string
-          example: medicoenlinea
+        - Order
+      summary: Create Order From Customer Cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentMethod:
+                  type: string
+                  example: cash
+                clientId:
+                  type: integer
+                  description: Customer Id
+                addressId:
+                  type: integer
+                  description: Address Id for delivery
+                  example: 0
       responses:
         200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OkResponse'
-        400:
-          description: Invalid data
-  /v2/auth/session/{SESSION_ID}:
-    get:
-      tags:
-        - Session-Operations
-      summary: View session status
-      parameters:
-      - name: SESSION_ID
-        in: path
-        description: Session Id Token
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
+          description: Cart info
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: "Active"
-        400:
-          description: Invalid data
-  /v2/auth/session/{SESSION_ID}/close:
-    get:
-      tags:
-        - Session-Operations
-      summary: Session destroy
-      parameters:
-      - name: SESSION_ID
-        in: path
-        description: Session Id Token
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OkResponse'
-        400:
-          description: Invalid data
-  /v2/auth/session/{SESSION_ID}/refresh:
-    get:
-      tags:
-        - Session-Operations
-      summary: Refresh session Id Token
-      parameters:
-      - name: SESSION_ID
-        in: path
-        description: Session Id Token
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  session:
-                    type: string
-                    description: New session Id token
-                    example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
-        400:
-          description: Invalid data
-  /v2/auth/session/{SESSION_ID}/data:
-    get:
-      tags:
-        - Session-Operations
-      summary: Get user data from active session Id
-      parameters:
-      - name: SESSION_ID
-        in: path
-        description: Session Id Token
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1234
-                  pid:
-                    type: integer
-                    example: 12999
-                  uuid:
-                    type: string
-                    format: uuid
-                  email:
-                    type: string
-                    format: email
-                  name:
-                    type: string
-                    example: Luis González
-                  activeSession:
-                    type: boolean
-                  activeApikey:
-                    type: boolean
-                  roles:
-                    type: array
-                    items: 
-                      type: string
+                  cart:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 10000
+                            description: Order Id
+                          client_id:
+                            type: integer
+                            example: 1
+                            description: Order Id
+                          payment_method:
+                            type: string
+                            example: bank_transfer
+                          cost_shipping:
+                            type: number
+                            format: float
+                            example: 0
+                          delivery_place_id:
+                            type: integer
+                          total_qty:
+                            type: integer
+                            example: 1
+                          status_id:
+                            type: integer
+                            example: 1
+                          total_amount_net:
+                            type: number
+                            format: float
+                            example: 221.99
+                          total_amount_gross:
+                            type: number
+                            format: float
+                            example: 202.24
+                          total_ammount_tax:
+                            type: number
+                            format: float
+                            example: 18.75
+                          total_amount_discounted_notax:
+                            type: number
+                            format: float
+                            example: 202.24
+                          created_date:
+                            type: string
+                            format: date-time
         400:
           description: Invalid data
 components:
@@ -369,3 +216,235 @@ components:
         status:
           type: string
           example: success
+    CartCustomerModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12345
+          description: Customer id
+        name:
+          type: string
+          example: Luis González
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: integer
+          example: 5512345678
+        zip_code:
+          type: string
+          example: "03200"
+    ProductData:
+      type: object
+      description: Product Data Model
+      properties:
+        id:
+          type: integer
+          example: 746
+          description: Product id
+        name:
+          type: string
+          example: LORATADINA
+        description:
+          type: string
+        dose:
+          type: string
+          example: 10 mg
+        qty:
+          type: integer
+          example: 10
+        is_active:
+          type: boolean
+        is_approved:
+          type: boolean
+        is_catalogued:
+          type: boolean
+        is_controlled:
+          type: boolean
+        is_refrigerated:
+          type: boolean
+        is_antibiotic:
+          type: boolean
+        barcode:
+          type: integer
+          example: 7501349024779
+        molecule:
+          type: string
+          example: LORATADINA
+        molecule_id:
+          type: integer
+          example: 966
+        unit_price:
+          type: number
+          format: float
+          example: 4.1
+        max_publice_price:
+          type: number
+          format: float
+          example: 75.00
+        sell_price:
+          type: number
+          format: float
+          example: 41.00
+        content_unit_id:
+          type: integer
+          example: 57
+        pharmaceutical_form_id:
+          type: integer
+          example: 36
+        stock:
+          type: integer
+          example: 2
+        palabras_claves:
+          type: string
+          example: LORATADINA 10 mg 10 TABS\nALERGIA
+        is_promo:
+          type: boolean
+          example: false
+        limite_promo:
+          type: integer
+          example: 0
+        image_promo:
+          type: string
+          format: uri
+        factor_promo:
+          type: number
+          format: float
+        dose_id:
+          type: integer
+          example: 567
+        search_terms:
+          type: string
+          example: Loratadina
+        market_id:
+          type: integer
+          example: 4
+        iva:
+          type: number
+          format: float
+          example: 0.16
+        ieps:
+          type: number
+          format: float
+          example: 0.08
+        pharmaceutical_form_name:
+          type: string
+          example: Tableta
+        units_id:
+          type: integer
+        units:
+          type: string
+          example: Tableta(s)
+        presentation_id:
+          type: integer
+        presentation:
+          type: string
+        promo_price:
+          type: number
+          format: float
+        alternative:
+          type: object
+          nullable: true
+        recommended:
+          type: boolean
+        lot_id:
+          type: integer
+          example: 4391
+        lot:
+          type: string
+          example: U23T410
+        expiration_date:
+          type: string
+          format: date-time
+          example: 2035-10-31 00:00:00
+        remaining_months:
+          type: integer
+          example: 120
+        item_id:
+          type: integer
+        quantity:
+          type: integer
+          example: 1
+        stock_total:
+          type: integer
+          example: 1
+        promo_factor:
+          type: number
+          format: float
+          example: 0
+        promo_image:
+          type: string
+          format: uri
+        subtotal:
+          type: number
+          format: float
+          example: 41.00
+        unit_promo_price:
+          type: number
+          format: float
+          example: 41
+        total_price:
+          type: number
+          format: float
+          example: 41
+        gross_price:
+          type: number
+          format: float
+          example: 41
+        amount_tax:
+          type: number
+          format: float
+        quantity_total:
+          type: integer
+          example: 1
+        uri:
+          type: string
+          format: uri
+          example: loratadina-loratadina-10-mg-tableta-10--7501349024779
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: FE_7501349024779_515
+              alt:
+                type: string
+                example: 7501349024779 4010 loratadina loratadina 10 mg tableta 10
+              url:
+                type: string
+                format: uri
+                example: http://api.localhost/v2/image/7501349024779-4010-loratadina-loratadina-10-mg-tableta-10-
+    CartInfoModel:
+      type: object
+      description: Cart basic info Model
+      properties:
+        id:
+          type: integer
+          example: 12345
+          description: Cart id
+        uuid:
+          type: string
+          format: uuid
+          description: Cart UUID
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        client_id:
+          type: integer
+          example: 1234
+        total:
+          type: number
+          format: float
+          example: 299.99
+        totalQuantity:
+          type: integer
+          example: 3
+        totalItems:
+          type: integer
+          example: 2
