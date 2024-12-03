@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: Ecommerce 2.0 - Products
+  description: |-
+    E-commerce order system
+
+    - [Product Listing API](index.html)
+    - [Authentication API](authentication.html)
+    - [Customer Order API](order.html)
+    - [Order Management API](order-backoffice.html)
+  version: 2.0.0
+servers:
+  - url: '{PROTOCOL}://{API_URL}'
+    variables:
+      API_URL:
+        default: api.localhost
+      PROTOCOL:
+        enum:
+          - 'http'
+          - 'https'
+        default: 'http'
+tags:
+  - name: Product
+    description: Product data listing
+  - name: Product Search
+    description: Product search options
+paths:
+  /v2/product/search:
+    get:
+      tags:
+        - Product Search
+      summary: Searching and listing product data
+      parameters:
+      - name: "q"
+        in: query
+        description: Search Query
+        required: true
+        schema:
+          type: string
+          example: loratadina
+      - name: "related"
+        in: query
+        description: Should Search result include alternative property for each product?
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 1
+          example: 0
+      - name: "whithlots"
+        in: query
+        description: Should Search result include lot data for each product?
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 1
+          example: 0
+      - name: "includenostock"
+        in: query
+        description: Should Search result include products with no stock?
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 1
+          example: 0
+      responses:
+        200:
+          description: Product search result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductBasicData"
+        404:
+          description: Not Found
+  /v2/symptom/{SYMPTOM}:
+    get:
+      tags:
+        - Product Search
+      summary: Searching and listing product data
+      parameters:
+      - name: "SYMPTOM"
+        in: path
+        description: Search Query
+        required: true
+        schema:
+          type: string
+          example: dolor de cabeza
+      responses:
+        200:
+          description: Product search result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: dolor de cabeza
+                  total:
+                    type: integer
+                    example: 17
+                  matchingCategories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        title:
+                          type: string
+                          example: medicina general e internista-dolor-cabeza cuerpo
+                        name:
+                          type: string
+                          example: medicina+general+e+internista/dolor/cabeza+cuerpo
+                        description:
+                          type: string
+                          example: medicina general e internista,dolor,cabeza cuerpo
+                  list:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProductBasicData"
+  /v2/product/promo/category/{CATEGORY}:
+    get:
+      tags:
+        - Product Search
+      summary: Get promo products by category
+      parameters:
+      - name: "CATEGORY"
+        in: path
+        description: Category name
+        required: true
+        schema:
+          type: string
+          example: dermatologia
+      responses:
+        200:
+          description: Product search result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 17
+                  list:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProductBasicData"
+        404:
+          description: Not Found
+  /v2/product/{PRODUCT_URI}:
+    get:
+      tags:
+        - Product
+      summary: Get product data by URI
+      parameters:
+      - name: "PRODUCT_URI"
+        in: path
+        description: Product URI
+        required: true
+        schema:
+          type: string
+          example: ensure-advance-vainilla--multivitaminicos-no-definida-liquido-237-mililitro-7501033958717
+      responses:
+        200:
+          description: Product data
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/ProductBasicData"
+        404:
+          description: Not Found
+  /v2/product/topsold:
+    get:
+      tags:
+        - Product
+      summary: Get top 15 most sold products
+      responses:
+        200:
+          description: Product search result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductBasicData"
+        404:
+          description: Not Found
+  /v2/category/alias:
+    get:
+      tags:
+        - Category
+      summary: List product categories
+      responses:
+        200:
+          description: Available product categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    total:
+                      type: integer
+                      example: 17
+                    list:
+                      type: array
+                      items:
+                        type: string
+                        example: Dermatologia
+        404:
+          description: Not Found
+  /v2/sitemap-categories:
+    get:
+      tags:
+        - Category
+      summary: List product categories sitemap
+      responses:
+        200:
+          description: Available product categories sitemap
+          content:
+            text/xml:
+              schema:
+                xml:
+                  wrapped: false
+                  name: urlset
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: object
+                      properties:
+                        loc:
+                          type: string
+                          format: uri
+                          example: https://farmaenvios.com/dermatologia/piel/comezon
+                        changefreq:
+                          type: string
+                          example: monthly
+                        priority:
+                          type: number
+                          format: float
+                          example: 0.8
+components:
+  schemas:
+    ProductBasicData:
+      type: object
+      description: Product Data Model
+      properties:
+        id:
+          type: integer
+          example: 746
+          description: Product id
+        name:
+          type: string
+          example: LORATADINA
+        description:
+          type: string
+        dose:
+          type: string
+          example: 10 mg
+        qty:
+          type: integer
+          example: 10
+        is_active:
+          type: boolean
+        is_approved:
+          type: boolean
+        is_catalogued:
+          type: boolean
+        is_controlled:
+          type: boolean
+        is_refrigerated:
+          type: boolean
+        is_antibiotic:
+          type: boolean
+        barcode:
+          type: integer
+          example: 7501349024779
+        molecule:
+          type: string
+          example: LORATADINA
+        molecule_id:
+          type: integer
+          example: 966
+        unit_price:
+          type: number
+          format: float
+          example: 4.1
+        max_publice_price:
+          type: number
+          format: float
+          example: 75.00
+        sell_price:
+          type: number
+          format: float
+          example: 41.00
+        content_unit_id:
+          type: integer
+          example: 57
+        pharmaceutical_form_id:
+          type: integer
+          example: 36
+        stock:
+          type: integer
+          example: 2
+        palabras_claves:
+          type: string
+          example: LORATADINA 10 mg 10 TABS\nALERGIA
+        is_promo:
+          type: boolean
+          example: false
+        limite_promo:
+          type: integer
+          example: 0
+        image_promo:
+          type: string
+          format: uri
+        factor_promo:
+          type: number
+          format: float
+        dose_id:
+          type: integer
+          example: 567
+        search_terms:
+          type: string
+          example: Loratadina
+        market_id:
+          type: integer
+          example: 4
+        iva:
+          type: number
+          format: float
+          example: 0.16
+        ieps:
+          type: number
+          format: float
+          example: 0.08
+        pharmaceutical_form_name:
+          type: string
+          example: Tableta
+        units_id:
+          type: integer
+        units:
+          type: string
+          example: Tableta(s)
+        presentation_id:
+          type: integer
+        presentation:
+          type: string
+        promo_price:
+          type: number
+          format: float
+        alternative:
+          type: object
+          nullable: true
+        recommended:
+          type: boolean
+        unit_promo_price:
+          type: number
+          format: float
+          example: 41
+        uri:
+          type: string
+          format: uri
+          example: loratadina-loratadina-10-mg-tableta-10--7501349024779
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: FE_7501349024779_515
+              alt:
+                type: string
+                example: 7501349024779 4010 loratadina loratadina 10 mg tableta 10
+              url:
+                type: string
+                format: uri
+                example: http://api.localhost/v2/image/7501349024779-4010-loratadina-loratadina-10-mg-tableta-10-

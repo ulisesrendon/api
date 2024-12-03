@@ -4,9 +4,21 @@ info:
   description: |-
     E-commerce user authentication system
 
+    - [Product Listing API](index.html)
     - [Authentication API](authentication.html)
     - [Customer Order API](order.html)
+    - [Order Management API](order-backoffice.html)
   version: 1.0.0
+servers:
+  - url: '{PROTOCOL}://{API_URL}'
+    variables:
+      API_URL:
+        default: api.localhost
+      PROTOCOL:
+        enum:
+          - 'http'
+          - 'https'
+        default: 'http'
 tags:
   - name: User-Access
     description: User register/access

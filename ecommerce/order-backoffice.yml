@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Ecommerce 2.0 - Customer Orders
+  title: Ecommerce 2.0 - Order Management
   description: |-
-    E-commerce customer ordering system
+    E-commerce order system
 
     - [Product Listing API](index.html)
     - [Authentication API](authentication.html)
@@ -20,8 +20,6 @@ servers:
           - 'https'
         default: 'http'
 tags:
-  - name: Cart
-    description: Cart Operations
   - name: Order
     description: Order Operations
   - name: Address
@@ -30,126 +28,13 @@ tags:
     description: Order Shipping Info
   - name: Billing
     description: Order Billing Info
+  - name: Dealers
+    description: Order Dealers
+  - name: Customer
+    description: Customer searching
   - name: Product
     description: Product search options
 paths:
-  /v2/cart/{UUID}:
-    get:
-      tags:
-        - Cart
-      summary: List items and cart info
-      parameters:
-      - name: UUID
-        in: path
-        description: Cart UUID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        200:
-          description: Cart info
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cart:
-                    type: object
-                    $ref: '#/components/schemas/CartInfoModel'
-                  client:
-                    type: object
-                    nullable: true
-                    $ref: '#/components/schemas/CartCustomerModel'
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CartProductData'
-        400:
-          description: Invalid data
-    patch:
-      tags:
-        - Cart
-      summary: Add items to cart
-      parameters:
-      - name: UUID
-        in: path
-        description: Cart UUID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      productId:
-                        type: integer
-                        example: 7916
-                        description: Product Id to add to cart
-                      quantity:
-                        type: integer
-                        example: 2
-                        description: quantity to add to the cart for this product
-                client_id:
-                  type: integer
-                  description: Customer Id
-      responses:
-        200:
-          description: Cart info
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cart:
-                    type: object
-                    $ref: '#/components/schemas/CartInfoModel'
-        400:
-          description: Invalid data
-  /v2/cart/client:
-    get:
-      tags:
-        - Cart
-      summary: List items and cart info from customer session
-      parameters:
-      - name: "x-session"
-        in: header
-        description: Active customer session Id Token
-        required: true
-        schema:
-          type: string
-          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
-      responses:
-        200:
-          description: Cart info
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cart:
-                    type: object
-                    $ref: '#/components/schemas/CartInfoModel'
-                  client:
-                    type: object
-                    nullable: true
-                    $ref: '#/components/schemas/CartCustomerModel'
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CartProductData'
-        400:
-          description: Invalid data
-        401:
-          description: Unauthorized
   /v2/order:
     post:
       tags:
@@ -193,7 +78,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: false
         schema:
           type: string
@@ -250,7 +135,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: false
         schema:
           type: string
@@ -282,6 +167,63 @@ paths:
           description: Unauthorized
         404:
           description: Not found
+    patch:
+      tags:
+        - Order
+      summary: Update Order
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Valid Admin session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "ORDER_ID"
+        in: path
+        description: Order Id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentMethod:
+                  type: string
+                  example: cash
+                paymentStatus:
+                  type: boolean
+                status:
+                  type: string
+                  description: Order internal status
+                  example: DEL
+                addressId:
+                  type: integer
+                  description: Address Id for delivery
+                  example: 0
+                backofficeId:
+                  type: integer
+                  description: Backoffice admin internal identifier
+                  example: 1
+                dealerId:
+                  type: integer
+                  description: Backoffice dealer internal identifier
+                  example: 1
+                reason:
+                  type: string
+                  description: Reason for order cancelling or rejection
+      responses:
+        200:
+          description: Order updated
+        400:
+          description: Invalid data
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
   /v2/order/detailed:
     get:
       tags:
@@ -290,7 +232,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: false
         schema:
           type: string
@@ -347,7 +289,7 @@ paths:
           description: Unauthorized
         404:
           description: Not found
-  /v2/client/address:
+  /v2/backoffice/client/address/{CUSTOMER_ID}:
     get:
       tags:
         - Address
@@ -355,11 +297,18 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: true
         schema:
           type: string
           example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "CUSTOMER_ID"
+        in: path
+        description: Customer Id 
+        required: true
+        schema:
+          type: integer
+          example: 4635
       responses:
         200:
           description: Addresses list
@@ -376,7 +325,7 @@ paths:
           description: Unauthorized
         404:
           description: Not found
-  /v2/client/lastinfo:
+  /v2/backoffice/client/lastinfo/{CUSTOMER_ID}:
     get:
       tags:
         - Address
@@ -384,11 +333,18 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: true
         schema:
           type: string
           example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "CUSTOMER_ID"
+        in: path
+        description: Customer Id 
+        required: true
+        schema:
+          type: integer
+          example: 4635
       responses:
         200:
           description: Customer last address-payment
@@ -414,7 +370,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: true
         schema:
           type: string
@@ -479,7 +435,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: true
         schema:
           type: string
@@ -532,7 +488,7 @@ paths:
       parameters:
       - name: "x-session"
         in: header
-        description: Active customer session Id Token
+        description: Valid Admin session Id Token
         required: true
         schema:
           type: string
@@ -556,6 +512,132 @@ paths:
           description: Unauthorized
         404:
           description: Not found
+  /v2/catalog/dealer:
+    get:
+      tags:
+        - Dealers
+      summary: view available dealers for order shipping
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Valid Admin session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      responses:
+        200:
+          description: Available dealer list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DealerModel"
+        401:
+          description: Unauthorized
+  /v2/person/bymail/{SEARCH}:
+    get:
+      tags:
+        - Customer
+      summary: Search customer data by email or by phone
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Valid Admin session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "SEARCH"
+        in: path
+        description: Searching email or phone string
+        required: true
+        schema:
+          type: string
+          example: maria
+      responses:
+        200:
+          description: Customer list result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomerModel"
+        401:
+          description: Unauthorized
+  /v2/person/search/{SEARCH}:
+    get:
+      tags:
+        - Customer
+      summary: Search customer data by name
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Valid Admin session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "SEARCH"
+        in: path
+        description: Searching name string
+        required: true
+        schema:
+          type: string
+          example: maria
+      responses:
+        200:
+          description: Customer list result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomerModel"
+        401:
+          description: Unauthorized
+  /v2/person/{PROFILE}:
+    get:
+      tags:
+        - Customer
+      summary: Get customer data by profile UUID
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Valid Admin session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      - name: "PROFILE"
+        in: path
+        description: Customer profile UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Customer data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CustomerModel"
+        401:
+          description: Unauthorized
+        404:
+          description: Not Found
   /v2/product/search:
     get:
       tags:
@@ -1057,3 +1139,53 @@ components:
         created_at:
           type: string
           format: date-time
+    DealerModel:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: integer
+          example: 5512345678
+    CustomerDataBasicModel:
+      type: object
+      properties:
+        name:
+          type: string
+        secondname:
+          type: string
+        gender: 
+          type: string
+        lastname:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        newsletter_suscription:
+          type: boolean
+    CustomerModel:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: Customer Id
+          example: 1
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: integer
+          example: 5512345678
+        person_id:
+          type: string
+          format: uuid
+          description: Customer profile UUID
+        person_name:
+          type: string
+        person_data:
+          $ref: '#/components/schemas/CustomerDataBasicModel'
