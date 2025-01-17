@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: Ecommerce 2.0 - Medical services
+  version: 2.0.0
+servers:
+  - url: '{PROTOCOL}://{API_URL}'
+    variables:
+      API_URL:
+        default: api.localhost
+      PROTOCOL:
+        enum:
+          - 'http'
+          - 'https'
+        default: 'http'
+tags:
+  - name: Services
+  - name: Schedules
+paths:
+  /v2/service/type:
+    get:
+      tags:
+        - Services
+      summary: List medical service types
+      responses:
+        200:
+          description: Medical services types list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      type: object
+                      properties: 
+                        id:
+                          type: integer
+                          example: 2
+                        name:
+                          type: string
+                          example: vaccine
+                        title:
+                          type: string
+                          example: Servicio de aplicación de vacuna
+  /v2/service:
+    get:
+      tags:
+        - Services
+      summary: List available medical services
+      responses:
+        200:
+          description: Medical services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      type: object
+                      $ref: '#/components/schemas/MedicalServiceModel'
+  /v2/service/type/{MEDICAL_TYPE}:
+    get:
+      tags:
+        - Services
+      summary: List available medical services by type
+      parameters:
+      - name: MEDICAL_TYPE
+        in: path
+        description: Medical type Id
+        required: true
+        schema:
+          type: integer
+          example: 1
+      responses:
+        200:
+          description: Medical services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      type: object
+                      $ref: '#/components/schemas/MedicalServiceModel'
+  /medical/appointment/availability/dayschedule?y={YEAR}&m={MONTH}&d={DAY}:
+    get:
+      tags:
+        - Schedules
+      summary: Check availability schedule for a specific day
+      parameters:
+      - name: YEAR
+        in: path
+        description: Desired year for schedule
+        required: true
+        schema:
+          type: integer
+          example: 2025
+      - name: MONTH
+        in: path
+        description: Desired month for schedule
+        required: true
+        schema:
+          type: integer
+          example: 12
+      - name: DAY
+        in: path
+        description: Desired day for schedule
+        required: true
+        schema:
+          type: integer
+          example: 22
+      responses:
+        200:
+          description: Medical services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availability:
+                    type: array
+                    items:
+                      type: string
+                      format: date-time
+                      example: 2025-12-20 09:40:00
+  /medical/appointment/availability/vaccine?date={YEAR}-{MONTH}{DAY}:
+    get:
+      tags:
+        - Schedules
+      summary: Check vaccination service availability schedule for a specific day
+      parameters:
+      - name: YEAR
+        in: path
+        description: Desired year for schedule
+        required: true
+        schema:
+          type: integer
+          example: 2025
+      - name: MONTH
+        in: path
+        description: Desired month for schedule
+        required: true
+        schema:
+          type: integer
+          example: 12
+      - name: DAY
+        in: path
+        description: Desired day for schedule
+        required: true
+        schema:
+          type: integer
+          example: 22
+      responses:
+        200:
+          description: Medical services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availability:
+                    type: array
+                    items:
+                      type: string
+                      format: date-time
+                      example: 2025-12-20 09:40:00
+  /medical/appointment/order/new:
+    post:
+      tags:
+        - Schedules
+      summary: Schedule a medical appointment
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      responses:
+        200:
+          description: Set a medical appointment at the desired hour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date-time
+                    example: 2025-12-01 10:40
+                  person:
+                    type: string
+                    format: uuid
+                  payment_method:
+                    type: string
+                    example: paypal
+                  type:
+                    type: integer
+                    example: 1
+                  subject:
+                    type: string
+                    example: Consulta general
+                  service:
+                    type: string
+                    example: medical_appointment
+  /medical/appointment/{APPOINTMENT_ID}:
+    patch:
+      tags:
+        - Schedules
+      summary: Update appointment data
+      parameters:
+      - name: APPOINTMENT_ID
+        in: path
+        description: Appointment Id
+        required: true
+        schema:
+          type: integer
+          example: 999
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        required: true
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      responses:
+        200:
+          description: Change a single or multiple appointment parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointmentDate:
+                    type: string
+                    format: date-time
+                    example: 2025-12-01 10:40
+                  person:
+                    type: string
+                    format: uuid
+                  payment_method:
+                    type: string
+                    example: paypal
+                  paymentStatus:
+                    type: boolean
+                    example: true
+                  subject:
+                    type: string
+                    example: Dolor estomacal
+
+components:
+  schemas:
+    OkResponse:
+      type: object
+      description: Success response
+      properties:
+        status:
+          type: string
+          example: success
+    MedicalServiceModel:
+      type: object
+      description: Medical service model
+      properties: 
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: appointment_offline
+        title:
+          type: string
+          example: Consulta médica
+        default_subject:
+          type: string
+          example: 👨‍⚕️ Consulta general
+        type_id:
+          type: integer
+          example: 1
+        type_name:
+          type: string
+          example: medical_appointment
