@@ -1,6 +1,12 @@
 openapi: 3.0.3
 info:
   title: Ecommerce 2.0 - Medical services
+  description: |-
+    - [Product Listing API](index.html)
+    - [Authentication API](authentication.html)
+    - [Customer Order API](order.html)
+    - [Order Management API](order-backoffice.html)
+    - [Medical appointments API](medical.html)
   version: 2.0.0
 servers:
   - url: '{PROTOCOL}://{API_URL}'
@@ -14,7 +20,13 @@ servers:
         default: 'http'
 tags:
   - name: Services
+    description: Available medical services
   - name: Schedules
+    description: Check for available dates and schedule medical appointments
+  - name: Appointments
+    description: Check for scheduled medical appointments
+  - name: Availabilities
+    description: Availability spaces management
 paths:
   /v2/service/type:
     get:
@@ -182,6 +194,13 @@ paths:
         schema:
           type: string
           example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: "#/components/schemas/AppointmentRequestModel"
       responses:
         200:
           description: Set a medical appointment at the desired hour
@@ -209,10 +228,22 @@ paths:
                   service:
                     type: string
                     example: medical_appointment
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
   /medical/appointment/{APPOINTMENT_ID}:
     patch:
       tags:
-        - Schedules
+        - Appointments
       summary: Update appointment data
       parameters:
       - name: APPOINTMENT_ID
@@ -229,6 +260,13 @@ paths:
         schema:
           type: string
           example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: "#/components/schemas/AppointmentRequestModel"
       responses:
         200:
           description: Change a single or multiple appointment parameter
@@ -253,7 +291,415 @@ paths:
                   subject:
                     type: string
                     example: Dolor estomacal
-
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /v2/document:
+    post:
+      tags:
+        - Appointments
+      summary: Attach payment proof to appointment order
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  document:
+                    description: Valid image file (jpg, png, pdf)
+                    type: string
+                    format: binary
+                  type:
+                    type: integer
+                    example: 2
+                  appointment:
+                    type: integer
+                    example: 999
+                  token:
+                    type: string
+                    example: c94a83871cf835805e7c7f49df2b6d8b3cf2125c572ce0eaf6710c86870b926e800e2c3e88b62f798fda599c6dd21d4a9efa8b7e9ea366743222e2ea38d531ab
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /v2/prescription:
+    post:
+      tags:
+        - Appointments
+      summary: Define prescription diagnostic, indications and drugs for medical appointment
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/PrescriptionRequestModel"
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /medical/appointment/all?condition={CONDITION}:
+    get:
+      tags:
+        - Appointments
+      summary: Appointment listing
+      parameters:
+      - name: "CONDITION"
+        in: path
+        required: true
+        description: Status condition for appointment filtering
+        schema:
+          type: string
+          example: pending
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      responses:
+        200:
+          description: List of scheduled appointments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: 
+                    type: integer
+                    example: 444
+                  appointments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AppointmentModel"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /medical/appointment/person/{PERSON_ID}:
+    get:
+      tags:
+        - Appointments
+      summary: Appointment listing by person UUID
+      parameters:
+      - name: "PERSON_ID"
+        in: path
+        required: true
+        description: Required person Id
+        schema:
+          type: string
+          format: uuid
+      - name: "STATUS"
+        in: query
+        description: Condition status for appointment filtering
+        schema:
+          type: string
+          example: pending
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      responses:
+        200:
+          description: List of person appointments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: 
+                    type: integer
+                    example: 444
+                  appointments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AppointmentModel"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /medical/appointment/availability/status?date={DATE}:
+    get:
+      tags:
+        - Availabilities
+      summary: Validate date availability for appointments
+      parameters:
+      - name: DATE
+        in: path
+        description: Desired date for validation
+        required: true
+        schema:
+          type: string
+          format: date-time
+          example: 2025-12-20 09:40:00
+      responses:
+        200:
+          description: Availability status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isAvailable:
+                    type: boolean
+  /medical/appointment/availability:
+    post:
+      tags:
+        - Availabilities
+      summary: Define available hours for medical services
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date-time
+                          example: 2025-06-20 14:00:00
+                        doctor:
+                          type: integer
+                          example: 1
+                        type:
+                          type: integer
+                          example: 1
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+    delete:
+      tags:
+        - Availabilities
+      summary: Disable hours for medical services
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date-time
+                      example: 2053-06-21 14:00:00
+                  doctor:
+                    type: integer
+                    example: 1
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+  /medical/appointment/availability/dayschedule:
+    post:
+      tags:
+        - Availabilities
+      summary: Define available hours for medical services for a single day
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                    example: 2025-06-20
+                  doctor:
+                    type: integer
+                    example: 1
+                  startTime:
+                    type: string
+                    format: time
+                    example: 08:00:00
+                  endTime:
+                    type: string
+                    format: time
+                    example: 24:00:00
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+    delete:
+      tags:
+        - Availabilities
+      summary: Disable days for medical services
+      parameters:
+      - name: "x-session"
+        in: header
+        description: Active session Id Token
+        schema:
+          type: string
+          example: 31e20b49c6fca6cadba6a294ed625376ac2c386a6c36422351e525867868ae1fbcab241ea06bf8f560a247033246f6aa11fd53ca1f602dc12012ae74bde9ca12
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+                      example: 2053-06-21
+                  doctor:
+                    type: integer
+                    example: 1
+      responses:
+        200:
+          description: Ok response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        400:
+          description: Invalid provided data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidResponse"
+        401:
+          description: No valid authorization data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
 components:
   schemas:
     OkResponse:
@@ -263,6 +709,26 @@ components:
         status:
           type: string
           example: success
+    InvalidResponse:
+      type: object
+      description: Bad request
+      properties:
+        status:
+          type: object
+          properties: 
+            error:
+              type: string
+              example: Invalid provided data
+    UnauthorizedResponse:
+      type: object
+      description: No valid authorization data
+      properties:
+        status:
+          type: object
+          properties: 
+            error:
+              type: string
+              example: No valid authorization data
     MedicalServiceModel:
       type: object
       description: Medical service model
@@ -285,3 +751,132 @@ components:
         type_name:
           type: string
           example: medical_appointment
+    AppointmentRequestModel:
+      type: object
+      description: Required data for appointment schedule
+      properties:
+        paymentMethod:
+          type: string
+          example: paypal
+        person:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date-time
+          example: 2025-12-01 10:40
+        type:
+          type: integer
+          example: 1
+        subject:
+          type: string
+          example: Dolor estomacal
+    PrescriptionDrugModel:
+      type: object
+      properties:
+        drug_id:
+          type: integer
+          example: 1234
+        drug_name:
+          type: string
+          example: Paracetamol 100Mg
+        in_stock:
+          type: boolean
+          example: true
+        notes:
+          type: string
+          example: tomar para la presión cada 8h
+    PrescriptionRequestModel:
+      type: object
+      description: Required data for prescription request
+      properties:
+        appointment_id:
+          type: integer
+          example: 999
+        notes:
+          type: string
+          example: Insomnio
+        notes_suggestions:
+          type: string
+          example: aplicar medidas de higiene del sueño
+        drugs:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/PrescriptionDrugModel"
+    PatientBasicModel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pid:
+          type: integer
+          example: 1234
+        relationship:
+          type: string
+          example: Hijo
+        name:
+          type: string
+          example: Michael Stevens Junior
+    AppointmentModel:
+      type: object
+      description: Appointment data
+      properties:
+        id:
+          type: integer
+          example: 44
+        date:
+          type: string
+          format: date-time
+        user_id:
+          type: integer
+          example: 1234
+        type:
+          type: integer
+          example: 1
+        status:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: mail
+          example: user@test.test
+        subject:
+          type: string
+          example: insomnio
+        name:
+          type: string
+          example: Michael Stevens
+        phone_number:
+          type: string
+          example: 5512345678
+        order_id:
+          type: integer
+          example: 1
+        is_paid:
+          type: boolean
+          example: false
+        payment_method:
+          type: string
+          example: bank_transfer
+        patient:
+          type: object
+          $ref: "#/components/schemas/PatientBasicModel"
+        payment_proof:
+          type: string
+          nullable: true
+        prescription_id:
+          type: integer
+          example: 44
+        availability_type:
+          type: integer
+          example: 1
+        token:
+          type: string
+          nullable: true
+        order_status:
+          type: integer
+          example: 4
+        person_data:
+          type: object

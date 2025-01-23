@@ -8,6 +8,7 @@ info:
     - [Authentication API](authentication.html)
     - [Customer Order API](order.html)
     - [Order Management API](order-backoffice.html)
+    - [Medical appointments API](medical.html)
   version: 2.0.0
 servers:
   - url: '{PROTOCOL}://{API_URL}'
